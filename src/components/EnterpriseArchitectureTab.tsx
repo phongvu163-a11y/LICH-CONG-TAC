@@ -9,9 +9,7 @@ import {
   CheckSquare, 
   Clipboard, 
   Check,
-  ChevronRight,
-  Rocket,
-  AlertCircle
+  ChevronRight
 } from 'lucide-react';
 
 interface EnterpriseArchitectureTabProps {
@@ -21,40 +19,11 @@ interface EnterpriseArchitectureTabProps {
 export default function EnterpriseArchitectureTab({ darkMode }: EnterpriseArchitectureTabProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [activeSubTab, setActiveSubTab] = useState<'SCHEMA' | 'ERD' | 'DEPLOY' | 'BACKUP'>('SCHEMA');
-  const [isDeploying, setIsDeploying] = useState(false);
-  const [deployResult, setDeployResult] = useState<{ success: boolean; id?: string; message?: string } | null>(null);
 
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
-  };
-
-  const handleDeployRender = async () => {
-    setIsDeploying(true);
-    setDeployResult(null);
-    try {
-      const response = await fetch('/api/deploy-render', { method: 'POST' });
-      const data = await response.json();
-      if (response.ok && data.success) {
-        setDeployResult({
-          success: true,
-          id: data.data?.deploy?.id || 'N/A'
-        });
-      } else {
-        setDeployResult({
-          success: false,
-          message: data.error || 'Lỗi từ Render API.'
-        });
-      }
-    } catch (err: any) {
-      setDeployResult({
-        success: false,
-        message: err.message || 'Lỗi kết nối tới máy chủ.'
-      });
-    } finally {
-      setIsDeploying(false);
-    }
   };
 
   const postgresDDL = `-- =======================================================
@@ -467,84 +436,6 @@ CREATE POLICY client_portal_read ON clients
                   </li>
                 ))}
               </ul>
-            </div>
-
-            {/* Render direct deploy panel */}
-            <div className={`col-span-1 md:col-span-2 p-4 rounded-xl border ${darkMode ? 'bg-zinc-900/40 border-zinc-800' : 'bg-white border-slate-200'} mt-2`}>
-              <h3 className="font-bold text-xs text-red-650 uppercase tracking-widest mb-3 flex items-center gap-1.5 border-b pb-2 border-red-500/10">
-                <Rocket className="w-4 h-4 text-rose-500 animate-pulse" />
-                <span>Triển Khai Trực Tiếp Lên Render (Render Direct Deployment)</span>
-              </h3>
-              
-              <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <p className={darkMode ? 'text-zinc-300' : 'text-slate-700'}>
-                    Hệ thống hỗ trợ kích hoạt deploy tự động lên hosting Render bằng Webhook Deploy API:
-                  </p>
-                  <div className="p-2 rounded bg-black/50 border border-zinc-850 font-mono text-[10px] text-zinc-400 break-all select-all flex items-center justify-between">
-                    <span>https://api.render.com/deploy/srv-d8hvf6...?key=xI0S...</span>
-                    <button
-                      onClick={() => copyToClipboard('https://api.render.com/deploy/srv-d8hvf60jo6nc73cngr20?key=xI0S9rq9zfI', 'render-hook')}
-                      className={`p-1 px-1.5 rounded text-[8px] font-sans transition-all cursor-pointer ${
-                        copiedId === 'render-hook' ? 'bg-emerald-500 text-white font-bold' : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'
-                      }`}
-                    >
-                      {copiedId === 'render-hook' ? 'Đã sao chép' : 'Sao chép'}
-                    </button>
-                  </div>
-                  <p className={`text-[9.5px] font-medium leading-tight ${darkMode ? 'text-zinc-500' : 'text-slate-500'}`}>
-                    * Lưu ý: Nút bên dưới sẽ gọi backend trung gian để kích hoạt lệnh build và deploy lại ứng dụng trên Cloud Render.
-                  </p>
-                </div>
-                
-                <div className="shrink-0 flex flex-col justify-center items-center gap-2 min-w-[200px]">
-                  <button
-                    onClick={handleDeployRender}
-                    disabled={isDeploying}
-                    className={`w-full p-3 py-2 rounded-xl font-bold text-[11px] tracking-wider uppercase flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 border ${
-                      isDeploying
-                        ? 'bg-zinc-800 border-zinc-700 text-zinc-550 cursor-not-allowed animate-pulse'
-                        : 'bg-gradient-to-r from-rose-500 to-red-650 hover:from-rose-600 hover:to-red-700 text-white shadow-md shadow-red-500/10 border-red-500/20'
-                    }`}
-                  >
-                    {isDeploying ? (
-                      <>
-                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-zinc-500" />
-                        <span>Đang kích hoạt...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Rocket className="w-3.5 h-3.5 text-white animate-bounce" />
-                        <span>Kích hoạt Deploy ngay</span>
-                      </>
-                    )}
-                  </button>
-                  
-                  {deployResult && (
-                    <div className={`w-full p-2 rounded-lg border flex items-start gap-1.5 text-[10px] ${
-                      deployResult.success
-                        ? 'bg-emerald-950/20 border-emerald-900 text-emerald-400'
-                        : 'bg-red-950/20 border-red-900 text-red-400'
-                    }`}>
-                      {deployResult.success ? (
-                        <Check className="w-3.5 h-3.5 shrink-0 mt-0.5 text-emerald-400" />
-                      ) : (
-                        <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-red-400" />
-                      )}
-                      <div className="break-all">
-                        <strong className="block font-bold">
-                          {deployResult.success ? 'Kích hoạt thành công!' : 'Triển khai thất bại'}
-                        </strong>
-                        {deployResult.success ? (
-                          <span>Deploy ID: <code className="p-0.5 bg-black/40 rounded">{deployResult.id}</code></span>
-                        ) : (
-                          <span>Lỗi: {deployResult.message}</span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
             </div>
 
           </div>

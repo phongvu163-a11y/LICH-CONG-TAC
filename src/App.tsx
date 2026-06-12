@@ -35,7 +35,6 @@ import { Task, TaskGroup, RecurrenceType, TASK_GROUP_LABELS, TASK_GROUP_COLORS, 
 import { calculateAlertDetails, playAlertSound, formatDateLabel } from './utils';
 import HouseholdBusinessGuide from './components/HouseholdBusinessGuide';
 import RBACLogsTab from './components/RBACLogsTab';
-import EnterpriseArchitectureTab from './components/EnterpriseArchitectureTab';
 
 interface StatutoryItem {
   id: string;
@@ -1070,7 +1069,7 @@ export default function App() {
       const response = await fetch(`/api/tasks/${taskId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...task, assignedTo: employeeId ? employeeId : undefined })
+        body: JSON.stringify({ ...task, assignedTo: employeeId || null })
       });
       if (response.ok) {
         const resData = await response.json();
@@ -2626,23 +2625,6 @@ export default function App() {
 
             {/* HOUSEHOLD BUSINESS CLASSIFICATION COMPLIANCE (NĐ 141 & TT 152) */}
             <HouseholdBusinessGuide darkMode={settings.darkMode} />
-
-            {/* KHU VỰC 6: KIẾN TRÚC HỆ THỐNG & TRIỂN KHAI RENDER */}
-            <div className={`p-5 rounded-xl border ${
-              settings.darkMode ? 'bg-[#152033]/50 border-sky-950/40' : 'bg-white border-slate-200 shadow-md'
-            } mt-6`}>
-              <h3 className={`font-black text-xs md:text-[13px] uppercase tracking-wider flex items-center gap-1.5 mb-2 ${
-                settings.darkMode ? 'text-sky-100' : 'text-slate-900'
-              }`}>
-                <Server className="w-4 h-4 text-rose-500 animate-pulse" />
-                <span>KHU VỰC 6: KIẾN TRÚC HỆ THỐNG & CƠ CHẾ TRIỂN KHAI RENDER</span>
-              </h3>
-              <p className={`text-[10px] mb-4 ${settings.darkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
-                ⚙️ Hỗ trợ theo dõi sơ đồ cơ sở dữ liệu (PostgreSQL DDL / ERD), chiến lược sao lưu định kỳ, tài liệu hướng dẫn và kích hoạt triển khai ứng dụng trực tiếp lên hosting Render.
-              </p>
-              
-              <EnterpriseArchitectureTab darkMode={settings.darkMode} />
-            </div>
 
           </div>
 

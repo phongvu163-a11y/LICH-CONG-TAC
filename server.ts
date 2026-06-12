@@ -18,6 +18,26 @@ if (!fs.existsSync(DATA_DIR)) {
 
 const DB_FILE_PATH = path.join(DATA_DIR, 'sqlite_sim_encrypted.db');
 const SYSTEM_LOG_PATH = path.join(DATA_DIR, 'system_log.txt');
+const KEY_FILE_PATH = path.join(DATA_DIR, 'active_key.txt');
+
+function getCurrentEncryptionKey(): string {
+  try {
+    if (fs.existsSync(KEY_FILE_PATH)) {
+      return fs.readFileSync(KEY_FILE_PATH, 'utf8').trim() || 'X9#taxAgent!SecureKey_2026';
+    }
+  } catch (e) {
+    console.error('Failed to read active encryption key file:', e);
+  }
+  return 'X9#taxAgent!SecureKey_2026';
+}
+
+function saveCurrentEncryptionKey(key: string) {
+  try {
+    fs.writeFileSync(KEY_FILE_PATH, key, 'utf8');
+  } catch (e) {
+    console.error('Failed to write active encryption key file:', e);
+  }
+}
 
 // Simple secure string encryption using AES-256-CBC simulation or direct Node crypto
 function encryptData(text: string, key: string): string {
@@ -207,7 +227,8 @@ function loadDatabaseFromFile() {
   try {
     if (fs.existsSync(DB_FILE_PATH)) {
       const encryptedRaw = fs.readFileSync(DB_FILE_PATH, 'utf8');
-      const decryptedJson = decryptData(encryptedRaw, DEFAULT_SETTINGS.encryptionKey);
+      const activeKey = getCurrentEncryptionKey();
+      const decryptedJson = decryptData(encryptedRaw, activeKey);
       currentState = JSON.parse(decryptedJson);
       currentState.employees = currentState.employees || [];
       // Clean up any old demo employees that might remain in decrypted db
@@ -408,7 +429,7 @@ async function startServer() {
       alertDays: Array.isArray(alertDays) ? alertDays : originalTask.alertDays,
       completed: completed ?? originalTask.completed,
       completedAt: completed ? (originalTask.completedAt || new Date().toISOString()) : undefined,
-      assignedTo: assignedTo === null ? undefined : (assignedTo ?? originalTask.assignedTo),
+      assignedTo: (assignedTo === null || assignedTo === '') ? undefined : (assignedTo ?? originalTask.assignedTo),
       kanbanStatus: kanbanStatus ?? originalTask.kanbanStatus ?? 'TODO',
       attachments: attachments ?? originalTask.attachments ?? [],
       comments: comments ?? originalTask.comments ?? [],
@@ -533,6 +554,7 @@ async function startServer() {
     
     if (encryptionKey && encryptionKey !== oldKey) {
       oldKeyNotice = ` (Mã hóa lại toàn bộ SQLite với khóa mới!)`;
+      saveCurrentEncryptionKey(encryptionKey);
     }
 
     currentState.settings = {
@@ -595,6 +617,7 @@ async function startServer() {
         }
 
         currentState = parsedState;
+        currentState.employees = currentState.employees || [];
         saveDatabaseToDisk('Khôi phục cơ sở dữ liệu từ file ngoài thành công', `PRAGMA read_backup_stream; -- Imported client restore`, req);
         return res.json({ success: true, state: currentState });
       }
@@ -614,6 +637,7 @@ async function startServer() {
       const parsedState = JSON.parse(decryptedJson);
 
       currentState = parsedState;
+      currentState.employees = currentState.employees || [];
       saveDatabaseToDisk(`Khôi phục cơ sở dữ liệu thành công từ tệp: ${backup.fileName}`, `RESTORE DATABASE FROM '${backup.fileName}';`, req);
 
       res.json({ success: true, state: currentState });
@@ -764,34 +788,6 @@ async function startServer() {
       res.send(csvContent);
     } catch (err: any) {
       res.status(500).send(`Xuất bản ghi nhật ký Excel thất bại: ${err.message}`);
-    }
-  });
-
-  // Kích hoạt Render deployment webhook
-  app.post('/api/deploy-render', async (req, res) => {
-    try {
-      const renderHookUrl = 'https://api.render.com/deploy/srv-d8hvf60jo6nc73cngr20?key=xI0S9rq9zfI';
-      const response = await fetch(renderHookUrl);
-      const data = await response.json();
-      
-      if (response.ok) {
-        saveDatabaseToDisk(
-          `Kích hoạt triển khai Render thành công. Deploy ID: ${(data as any).deploy?.id || 'Không rõ'}`,
-          `INSERT INTO audit_logs (action, details) VALUES ('DEPLOY_RENDER', 'Render deployment triggered successfully. Deploy ID: ${(data as any).deploy?.id || 'N/A'}');`,
-          req
-        );
-        res.json({ success: true, data });
-      } else {
-        throw new Error(JSON.stringify(data));
-      }
-    } catch (err: any) {
-      const errMsg = err.message || err;
-      saveDatabaseToDisk(
-        `Kích hoạt triển khai Render thất bại: ${errMsg}`,
-        `INSERT INTO audit_logs (action, details) VALUES ('DEPLOY_RENDER_FAILED', 'Render deployment failed: ${errMsg}');`,
-        req
-      );
-      res.status(500).json({ error: `Không thể kích hoạt triển khai Render: ${errMsg}` });
     }
   });
 
