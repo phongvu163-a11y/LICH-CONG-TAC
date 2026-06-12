@@ -1,0 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+/* Thiết lập cỡ chữ cơ sở toàn bộ hệ thống là 16px chính xác */
+html, body {
+  font-size: 16px !important;
+  font-family: var(--font-sans);
+}
+
+/* Tăng nhẹ các cỡ chữ nhỏ phụ trợ để đạt độ trực quan, dễ đọc cao nhất */
+.text-xs,
+[class*="text-[11px]"],
+[class*="text-[11.5px]"],
+[class*="text-[12px]"] {
+  font-size: 13.5px !important;
+}
+
+[class*="text-[10px]"],
+[class*="text-[9px]"],
+[class*="text-[8.5px]"],
+[class*="text-[8px]"] {
+  font-size: 12.5px !important;
+}
+
+[class*="text-sm"],
+[class*="text-[13px]"],
+[class*="text-[14px]"],
+[class*="text-[15px]"] {
+  font-size: 15px !important;
+}
+
+[class*="text-base"],
+[class*="text-[16px]"] {
+  font-size: 16px !important;
+}
+
+[class*="text-lg"],
+[class*="text-[18px]"] {
+  font-size: 18px !important;
+}
+
+/* Custom styling for Windows simulated desktop elements */
+@keyframes window-entry {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.window-active {
+  animation: window-entry 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Custom sound ripple animation */
+@keyframes ring-ripple {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+.animate-ripple {
+  animation: ring-ripple 1.5s infinite ease-out;
+}
+

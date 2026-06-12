@@ -1,0 +1,6 @@
+{
+  "name": "Lịch Cảnh Báo Nghiệp Vụ Đại Lý Thuế",
+  "description": "Ứng dụng lịch công việc và cảnh báo thời hạn thuế, kế toán, bảo hiểm, lao động, thống kê chuyên nghiệp cho Đại lý Thuế.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
